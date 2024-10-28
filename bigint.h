@@ -8,7 +8,7 @@
 #define MAX_bigInt_LEN 200
 #define MAX_INPUT_LEN 2 * MAX_bigInt_LEN
 #define NEW_BIGINT (bigInt_t *)malloc(sizeof(bigInt_t))
-#define CP_BIGINT(dst, src) memcpy(dst, src, sizeof(bigInt_t))
+#define CP_BIGINT(dst, src) do { for (int i = 0; i < (src)->len; ++i) (dst)->data[i] = (src)->data[i]; (dst)->len = (src)->len; } while(0)
 #define CLEAR(x) memset(x, 0, sizeof(bigInt_t))
 
 typedef struct bigInt bigInt_t;
@@ -28,6 +28,7 @@ uint8_t bigInt_isPrime(bigInt_t *bi);
 void bigInt_Add(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 int bigInt_Sub(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Mul(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_Mul_New(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Div(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_RShift(bigInt_t *dst, uint16_t bits);
