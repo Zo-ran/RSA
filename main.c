@@ -115,8 +115,8 @@ void test_prime() {
     //     const2.data[0] = prime_table[i];
     //     printf("%d\n", bigInt_isPrime(&const2));
     // }
-    bigInt_from_bitlen(&a, 16);
-    print_bigInt_int(&a);
+    bigInt_from_bitlen(&a, 256);
+    // print_bigInt_int(&a);
     while (!bigInt_isPrime(&a)) {
         print_bigInt_int(&a);
         bigInt_Add(&a, &a, &const2);
@@ -125,9 +125,13 @@ void test_prime() {
 }
 
 void test_calc() {
-    bigInt_from_bitlen(&a, 16);
-    bigInt_Mul(&a, &a, &a);
-    print_bigInt_int(&a);
+    a.len = 16;
+    a.data[16] = 30348;
+    a.data[15] = 5381;
+    b.len = 16;
+    b.data[15] = 40204;
+    b.data[16] = 0;
+    printf("%d", bigInt_Cmp(&a, &b));
 }
 
 void test_mod(){
@@ -142,7 +146,7 @@ void test_mod(){
 }
 
 int main() {
-    // srand((unsigned)time(NULL));
+    srand((unsigned)time(NULL));
     // rand();
     test_prime();
 }

@@ -8,8 +8,6 @@
 
 #define PRIME_CONFIDENCE 15
 
-int cnt;
-
 uint16_t prime_table[] = {
         3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41,
         43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 113,
@@ -99,14 +97,14 @@ uint8_t bigInt_isPrime(bigInt_t *bi) {
     if (bi->data[0] % 2 == 0)
         return false;
     bigInt_t t1, t2, d, a, tmp;
-    // for (int i = 0; i < sizeof(prime_table) / sizeof(prime_table[0]); ++i) {
-    //     t2.data[0] = prime_table[i];
-    //     t2.len = 1;
-    //     bigInt_Mod(&t1, bi, &t2);
-    //     assert(t1.len == 1);
-    //     if (t1.data[0] == 0)
-    //         return false;
-    // }
+    for (int i = 0; i < sizeof(prime_table) / sizeof(prime_table[0]); ++i) {
+        t2.data[0] = prime_table[i];
+        t2.len = 1;
+        bigInt_Mod(&t1, bi, &t2);
+        assert(t1.len == 1);
+        if (t1.data[0] == 0)
+            return false;
+    }
     // n - 1 = 2^s * d
     // a0 + a1 * 2^16 + a2 * 2^32 + a3 * 2^48
     int s = 0;
@@ -218,8 +216,6 @@ int bigInt_Sub(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
 }
 
 void bigInt_Mul(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
-    cnt += 1;
-    // printf("%d\n", cnt);
     bigInt_t tmp, ret;
     ret.data[0] = 0;
     ret.len = 1;
@@ -351,14 +347,17 @@ void bigInt_Div(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
                     tmp4.data[j] = tmp4.data[j - 1];
                 tmp4.data[0] = tmp1.data[i];
                 tmp4.len += 1;
-                while (tmp4.data[tmp4.len - 1] == 0 && tmp4.len != 1) tmp4.len -= 1;
+                while (tmp4.len < tmp2.len + 1) {
+                    tmp4.data[tmp4.len] = 0;
+                    tmp4.len += 1;
+                }
                 long long int quotient;
                 if (tmp4.len <= 1)
                     quotient = 0;
                 else
                     quotient = ((long long)tmp4.data[tmp4.len - 1] * 65536 + tmp4.data[tmp4.len - 2]) / highest - 2; // estimated quotient
+                while (tmp4.data[tmp4.len - 1] == 0 && tmp4.len != 1) tmp4.len -= 1;
                 quotient = quotient > 0 ? quotient : 0;
-                printf("%llx\n", quotient);
                 assert((quotient & 0xffff0000) == 0);
                 // r = a - pq
                 bigInt_Mul_int(&tmp3, &tmp2, quotient);
