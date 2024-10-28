@@ -8,7 +8,7 @@
 
 #define PRIME_CONFIDENCE 15
 
-const uint16_t prime_table[] = {
+uint16_t prime_table[] = {
         3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41,
         43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 113,
         193, 241, 257, 337, 353, 401, 433, 449, 577, 593, 641,
@@ -29,7 +29,23 @@ const uint16_t prime_table[] = {
         9649, 9697, 9857
 };
 
-void bigInt_from_string(bigInt_t *dest, const char *str) {
+// bigInt_t *a0;
+// bigInt_t *a1;
+// bigInt_t *b0;
+// bigInt_t *b1;
+// bigInt_t *z1;
+// bigInt_t *z2;
+
+// void init_bigInt() {
+//     a0 = NEW_BIGINT;
+//     a1 = NEW_BIGINT;
+//     b0 = NEW_BIGINT;
+//     b1 = NEW_BIGINT;
+//     z1 = NEW_BIGINT;
+//     z2 = NEW_BIGINT;
+// }
+
+void bigInt_from_string(bigInt_t *dest, char *str) {
     int len = strlen(str);
     assert(len <= MAX_INPUT_LEN && len > 0);
     
@@ -70,7 +86,7 @@ void bigInt_from_bitlen(bigInt_t *dest, int bitlen) {
     }
 }
 
-void bigInt_ModPow(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b, const bigInt_t *mod) {
+void bigInt_ModPow(bigInt_t *dst, bigInt_t *a, bigInt_t *b, bigInt_t *mod) {
     bigInt_t *ap = NEW_BIGINT;
     CP_BIGINT(ap, a);
 
@@ -100,7 +116,7 @@ void bigInt_ModPow(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b, const bi
     free(ap);
 }
 
-uint8_t bigInt_isPrime(const bigInt_t *bi) {
+uint8_t bigInt_isPrime(bigInt_t *bi) {
     if (bi->len == 1) {
         if (bi->data[0] == 1)
             return false;
@@ -160,15 +176,17 @@ uint8_t bigInt_isPrime(const bigInt_t *bi) {
     return true;
 }
 
-void bigInt_Add_shift(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b, int bits) {
+void bigInt_Add_shift(bigInt_t *dst, bigInt_t *a, bigInt_t *b, int bits) {
     int n = MAX(a->len, b->len + bits);
-    bigInt_t *f = NEW_BIGINT;
-    CP_BIGINT(f, a);
     uint16_t carry = 0;
-    for (int i = 0; i < bits; ++i)
+    for (int i = 0; i < bits && i < a->len; ++i)
         dst->data[i] = a->data[i];
     for (int i = bits; i < n; ++i) {
-        uint32_t tmp = a->data[i] + b->data[i - bits] + carry;
+        uint32_t tmp = 0;
+        if (i < a->len)
+            tmp += a->data[i];
+        if (i < b->len + bits)
+            tmp += b->data[i - bits];
         carry = (tmp & 0xffff0000) >> 16;
         dst->data[i] = tmp & 0xffff;
     }
@@ -181,11 +199,15 @@ void bigInt_Add_shift(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b, int b
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;
 }
 
-void bigInt_Add(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
+void bigInt_Add(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
     int n = MAX(a->len, b->len);
     uint16_t carry = 0;
     for (int i = 0; i < n; ++i) {
-        uint32_t tmp = a->data[i] + b->data[i] + carry;
+        uint32_t tmp = carry;
+        if (i < a->len)
+            tmp += a->data[i];
+        if (i < b->len)
+            tmp += b->data[i];
         carry = (tmp & 0xffff0000) >> 16;
         dst->data[i] = tmp & 0xffff;
     }
@@ -198,21 +220,41 @@ void bigInt_Add(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;
 }
 
-int bigInt_Sub(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
-    int n = MAX(a->len, b->len);
+int bigInt_Sub(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
+    if (dst != a)
+        CP_BIGINT(dst, a);
     uint16_t carry = 0;
-    dst->len = a->len;
-    for (int i = 0; i < n; ++i) {
+    assert(a->len >= b->len);
+    for (int i = 0; i < b->len; ++i) {
         uint32_t tmp = a->data[i] - b->data[i] - carry;
         carry = !!((tmp & 0xffff0000) >> 16);
         dst->data[i] = tmp & 0xffff;
+    }
+    if (carry) {
+        assert(a->len > b->len);
+        for (int i = b->len; i < a->len && carry; ++i) {
+            uint32_t tmp = a->data[i] - carry;
+            carry = !!((tmp & 0xffff0000) >> 16);
+            dst->data[i] = tmp & 0xffff;
+        }
     }
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;
     return carry ? -1 : 1;
 }
 
-void bigInt_Mul(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
-    int n = MAX(a->len, b->len);
+void bigInt_Mul(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
+    int n;
+    if (a->len > b->len) {
+        n = a->len;        
+        for (int i = b->len; i < n; ++i)
+            b->data[i] = 0;
+    }
+    else {
+        n = b->len;
+        for (int i = a->len; i < n; ++i)
+            a->data[i] = 0;
+    }
+    
     if (n == 0) {
         dst->len = 1;
         dst->data[0] = 0;
@@ -227,47 +269,33 @@ void bigInt_Mul(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
         }
     } else {
         int half = n / 2;
-        bigInt_t *a0 = NEW_BIGINT;
-        bigInt_t *a1 = NEW_BIGINT;
-        bigInt_t *b0 = NEW_BIGINT;
-        bigInt_t *b1 = NEW_BIGINT;
-        bigInt_t *z1 = NEW_BIGINT;
-        bigInt_t *z2 = NEW_BIGINT;
-        memset(a1, 0, sizeof(bigInt_t));
-        memset(a0, 0, sizeof(bigInt_t));
-        memset(b1, 0, sizeof(bigInt_t));
-        memset(b0, 0, sizeof(bigInt_t));
-        memset(z2, 0, sizeof(bigInt_t));
-        memset(z1, 0, sizeof(bigInt_t));
-        a0->len = half; b0->len = half;
+        bigInt_t a0, b0, a1, b1, z1, z2;
+        a0.len = half; b0.len = half;
         for (int i = 0; i < half; ++i) {
-            a0->data[i] = a->data[i];
-            b0->data[i] = b->data[i];
+            a0.data[i] = a->data[i];
+            b0.data[i] = b->data[i];
         }
-        a1->len = n - half, b1->len = n - half;
+        a1.len = n - half, b1.len = n - half;
         for (int i = half; i < n; ++i) {
-            a1->data[i - half] = a->data[i];
-            b1->data[i - half] = b->data[i];
+            a1.data[i - half] = a->data[i];
+            b1.data[i - half] = b->data[i];
         }
-        bigInt_Mul(dst, a0, b0); // BD 
-        bigInt_Mul(z2, a1, b1); // AC
+        bigInt_Mul(dst, &a0, &b0); // BD 
+        bigInt_Mul(&z2, &a1, &b1); // AC
 
-        bigInt_Add(a1, a1, a0); // (A + B)
-        bigInt_Add(b1, b1, b0); // (C + D)
-        bigInt_Mul(z1, a1, b1); // (A + B)(C + D)
-        bigInt_Sub(z1, z1, dst);
-        bigInt_Sub(z1, z1, z2); // (A + B)(C + D) - AC - BD = AD + BC
+        bigInt_Add(&a1, &a1, &a0); // (A + B)
+        bigInt_Add(&b1, &b1, &b0); // (C + D)
+        bigInt_Mul(&z1, &a1, &b1); // (A + B)(C + D)
+        bigInt_Sub(&z1, &z1, dst);
+        bigInt_Sub(&z1, &z1, &z2); // (A + B)(C + D) - AC - BD = AD + BC
 
-        bigInt_Add_shift(dst, dst, z1, half);
-        bigInt_Add_shift(dst, dst, z2, 2 * half);
-        free(a0); free(a1); free(b0); free(b1); free(z1); free(z2); 
+        bigInt_Add_shift(dst, dst, &z1, half);
+        bigInt_Add_shift(dst, dst, &z2, 2 * half);
     }
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;
-    for (int i = dst->len; dst->data[i] != 0; ++i)
-        dst->data[i] = 0;
 }
 
-void bigInt_Mul_int(bigInt_t *dst, const bigInt_t *a, const uint16_t d) {
+void bigInt_Mul_int(bigInt_t *dst, bigInt_t *a, uint16_t d) {
     if (d == 0) {
         dst->data[0] = 0;
         dst->len = 1;
@@ -287,7 +315,7 @@ void bigInt_Mul_int(bigInt_t *dst, const bigInt_t *a, const uint16_t d) {
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;
 }
 
-void bigInt_Div(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
+void bigInt_Div(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
     assert(b->len != 0);
     assert(b->len != 1 || b->data[0] != 0);
     int cmp = bigInt_Cmp(a, b);
@@ -355,11 +383,10 @@ void bigInt_Div(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
             }
             free(remainder); free(tmp);
         }
-        free(a0); free(b0);
     }
 }
 
-void bigInt_Mod(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
+void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
     if (a == dst) {
         bigInt_t *tmp = NEW_BIGINT;
         CP_BIGINT(tmp, a);
@@ -374,7 +401,7 @@ void bigInt_Mod(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
     }
 }
 
-void bigInt_RShift(bigInt_t *dst, const uint16_t bits) {
+void bigInt_RShift(bigInt_t *dst, uint16_t bits) {
     for (uint16_t i = 0; i < bits; ++i)
         for (int j = 0; j < dst->len; ++j) {
             dst->data[j] >>= 1;
@@ -385,7 +412,7 @@ void bigInt_RShift(bigInt_t *dst, const uint16_t bits) {
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;   
 }
 
-void bigInt_LShift(bigInt_t *dst, const uint16_t bits) {
+void bigInt_LShift(bigInt_t *dst, uint16_t bits) {
     for (uint16_t i = 0; i < bits; ++i)
         for (int j = dst->len - 1; j >= 0; j -= 1) {
             if (dst->data[j] & 0x8000)
@@ -396,7 +423,7 @@ void bigInt_LShift(bigInt_t *dst, const uint16_t bits) {
         dst->len += 1;
 }
 
-int bigInt_Cmp(const bigInt_t *a, const bigInt_t *b) {
+int bigInt_Cmp(bigInt_t *a, bigInt_t *b) {
     int ret = 0;
     if (a->len > b->len) {
         ret = 1;
@@ -415,7 +442,7 @@ int bigInt_Cmp(const bigInt_t *a, const bigInt_t *b) {
     return ret;
 }
 
-void print_bigInt_string(const bigInt_t *bi) {
+void print_bigInt_string(bigInt_t *bi) {
     char buf[MAX_INPUT_LEN + 1] = "\0";
     int cur_pos = 0;
     for (int i = 0; i < bi->len; ++i) {
@@ -425,7 +452,7 @@ void print_bigInt_string(const bigInt_t *bi) {
     printf("%s\n", buf);
 }
 
-void print_bigInt_int(const bigInt_t *bi) {
+void print_bigInt_int(bigInt_t *bi) {
     for (int i = 0; i < bi->len; ++i)
         printf("%d ", bi->data[i]);
     printf("\n");

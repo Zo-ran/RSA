@@ -50,8 +50,7 @@ void test_add() {
 
 void test_mul() {
     bigInt_from_bitlen(&a, 32);
-    print_bigInt_int(&a);
-    print_bigInt_int(&a);
+    bigInt_from_bitlen(&b, 16);
 }
 
 void test_div() {
@@ -64,16 +63,19 @@ void test_div() {
 }
 
 void test() {
-    
     bigInt_from_bitlen(&a, 1024);
+    a.len /= 2;
     bigInt_from_bitlen(&b, 512);
+    b.len /= 2;
     print_bigInt_int(&a);
     print_bigInt_int(&b);
     bigInt_Div(&c, &a, &b);
-    bigInt_Mod(&a, &a, &b);
-    bigInt_Mul(&c, &c, &b);
-    bigInt_Add(&c, &a, &c);
     print_bigInt_int(&c);
+    // bigInt_Mod(&a, &a, &b);
+    bigInt_Mul(&c, &c, &b);
+    // print_bigInt_int(&c);
+    // bigInt_Add(&c, &a, &c);
+    // print_bigInt_int(&c);
 
     assert(bigInt_Cmp(&a, &b) < 0);
 }
@@ -95,8 +97,18 @@ void test_prime() {
     }
 }
 
+void test_calc() {
+    bigInt_from_bitlen(&a, 512);
+    bigInt_from_bitlen(&b, 512);
+    // b.len = 1;
+    print_bigInt_int(&a);
+    print_bigInt_int(&b);
+    bigInt_Mul(&c, &a, &b);
+    print_bigInt_int(&c);
+}
+
 int main() {
-    srand((unsigned)time(NULL));
-    test_prime();
+    // srand((unsigned)time(NULL));
+    test_mul();
 }
 #endif

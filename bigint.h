@@ -18,21 +18,23 @@ struct bigInt {
 };
 
 // constructor
-void bigInt_from_string(bigInt_t *dest, const char *str);
+void bigInt_from_string(bigInt_t *dest, char *str);
 void bigInt_from_bitlen(bigInt_t *dest, int bitlen);
+void init_bigInt();
+
 
 // operators
-uint8_t bigInt_isPrime(const bigInt_t *bi);
-void bigInt_Add(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b);
-int bigInt_Sub(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b);
-void bigInt_Mul(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b);
-void bigInt_Div(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b);
-void bigInt_Mod(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b);
-void bigInt_RShift(bigInt_t *dst, const uint16_t bits);
-void bigInt_LShift(bigInt_t *dst, const uint16_t bits);
-int bigInt_Cmp(const bigInt_t *a, const bigInt_t *b);
-void bigInt_Mul_int(bigInt_t *dst, const bigInt_t *a, const uint16_t d);
+uint8_t bigInt_isPrime(bigInt_t *bi);
+void bigInt_Add(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+int bigInt_Sub(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_Mul(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_Div(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_RShift(bigInt_t *dst, uint16_t bits);
+void bigInt_LShift(bigInt_t *dst, uint16_t bits);
+int bigInt_Cmp(bigInt_t *a, bigInt_t *b);
+void bigInt_Mul_int(bigInt_t *dst, bigInt_t *a, uint16_t d);
 
 // formatter
-void print_bigInt_string(const bigInt_t *bi);
-void print_bigInt_int(const bigInt_t *bi);
+void print_bigInt_string(bigInt_t *bi);
+void print_bigInt_int(bigInt_t *bi);
