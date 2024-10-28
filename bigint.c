@@ -1,8 +1,5 @@
-#include <string.h>
-#include <assert.h>
 #include <stdio.h>
 #include <math.h>
-#include <stdlib.h>
 #include "bigint.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -90,13 +87,15 @@ void bigInt_ModPow(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b, const bi
         }
     }
     
+    while (bits[cur - 1] == 0) cur -= 1;
+
     for (int i = 0; i < cur; ++i) {
         if (bits[cur]) {
-            bigInt_MulEq(dst, ap);
-            bigInt_ModEq(dst, mod);
+            bigInt_Mul(dst, dst, ap);
+            bigInt_Mod(dst, dst, mod);
         }
-        bigInt_MulEq(ap, ap);
-        bigInt_ModEq(ap, mod);
+        bigInt_Mul(ap, ap, ap);
+        bigInt_Mod(ap, ap, mod);
     }
     free(ap);
 }
@@ -137,22 +136,27 @@ uint8_t bigInt_isPrime(const bigInt_t *bi) {
     // n - 1 = 2^s * d
     // a ^ d
     bigInt_t *a = NEW_BIGINT;
+    bigInt_t *tmp = NEW_BIGINT;
     for (int i = 0; i < PRIME_CONFIDENCE; ++i) {
         CLEAR(a);
         bigInt_from_bitlen(a, 16);
         bigInt_ModPow(a, a, d, bi);
 
-        if (a->len == 0 && a->data[0] == 1)
+        if (a->len == 1 && a->data[0] == 1)
             continue;
-        bigInt_t *tmp = NEW_BIGINT;
-        for (int i = 0; i < s; ++i) {
+        int j = 0;
+        for (; j < s; ++j) {
+            CLEAR(tmp);
             bigInt_Sub(tmp, bi, a);
-            if (tmp->data[0] != 1 || tmp->len != 1)
-                return false;
-            
+            if (tmp->data[0] == 1 && tmp->len == 1)
+                break;
+            bigInt_Mul(a, a, a);
+            bigInt_Mod(a, a, bi);
         }
+        if (j == s)
+            return false;
     }
-
+    free(t1); free(t2); free(a); free(d);
     return true;
 }
 
@@ -259,6 +263,8 @@ void bigInt_Mul(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
         free(a0); free(a1); free(b0); free(b1); free(z1); free(z2); 
     }
     while (dst->data[dst->len - 1] == 0 && dst->len != 1) dst->len -= 1;
+    for (int i = dst->len; dst->data[i] != 0; ++i)
+        dst->data[i] = 0;
 }
 
 void bigInt_Mul_int(bigInt_t *dst, const bigInt_t *a, const uint16_t d) {
@@ -354,12 +360,18 @@ void bigInt_Div(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
 }
 
 void bigInt_Mod(bigInt_t *dst, const bigInt_t *a, const bigInt_t *b) {
-    bigInt_t *tmp = NEW_BIGINT;
-    CLEAR(tmp);
-    bigInt_Div(tmp, a, b);
-    bigInt_Mul(dst, tmp, b);
-    bigInt_Sub(dst, a, dst);
-    free(tmp);
+    if (a == dst) {
+        bigInt_t *tmp = NEW_BIGINT;
+        CP_BIGINT(tmp, a);
+        bigInt_Div(dst, a, b);
+        bigInt_Mul(dst, dst, b);
+        bigInt_Sub(dst, tmp, dst);
+        free(tmp);
+    } else {
+        bigInt_Div(dst, a, b);
+        bigInt_Mul(dst, dst, b);
+        bigInt_Sub(dst, a, dst);
+    }
 }
 
 void bigInt_RShift(bigInt_t *dst, const uint16_t bits) {

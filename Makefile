@@ -3,7 +3,7 @@ COMPILE = $(CC) -c
 CFLAGS = -Wall -Wno-unused-result -O3 -g
 
 rsa: main.o bigint.o cipher.o
-	echo "#define DEBUG 1" > config.h
+	echo "#define DEBUG 0" > config.h
 	$(CC) $(CFLAGS) -o rsa main.o bigint.o cipher.o
 
 debug: main.o bigint.o cipher.o

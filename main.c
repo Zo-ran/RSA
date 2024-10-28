@@ -8,6 +8,8 @@
 #include "bigint.h"
 #include "cipher.h"
 
+extern const uint16_t prime_table[];
+
 #if DEBUG == 0
 
 int main() {
@@ -62,13 +64,39 @@ void test_div() {
 }
 
 void test() {
+    
+    bigInt_from_bitlen(&a, 1024);
+    bigInt_from_bitlen(&b, 512);
+    print_bigInt_int(&a);
+    print_bigInt_int(&b);
+    bigInt_Div(&c, &a, &b);
+    bigInt_Mod(&a, &a, &b);
+    bigInt_Mul(&c, &c, &b);
+    bigInt_Add(&c, &a, &c);
+    print_bigInt_int(&c);
+
+    assert(bigInt_Cmp(&a, &b) < 0);
+}
+
+void test_prime() {
+    bigInt_t const2;
+    CLEAR(&const2);
+    const2.data[0] = 8;
+    const2.len = 1;
+    // for (int i = 0; i < 166; ++i) {
+    //     const2.data[0] = prime_table[i];
+    //     printf("%d\n", bigInt_isPrime(&const2));
+    // }
     bigInt_from_bitlen(&a, 256);
     print_bigInt_int(&a);
-    bigInt_isPrime(&a);
+    while (!bigInt_isPrime(&a)) {
+        print_bigInt_int(&a);
+        bigInt_Add(&a, &a, &const2);
+    }
 }
 
 int main() {
     srand((unsigned)time(NULL));
-    test();
+    test_prime();
 }
 #endif
