@@ -1,6 +1,6 @@
 CC = gcc
 COMPILE = $(CC) -c 
-CFLAGS = -Wall -Wno-unused-result -g
+CFLAGS = -Wall -Wno-unused-result -g -pthread -O3
 
 rsa: main.o bigint.o cipher.o
 	echo "#define DEBUG 0" > config.h

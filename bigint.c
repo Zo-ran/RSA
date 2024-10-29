@@ -70,7 +70,7 @@ void bigInt_from_bitlen(bigInt_t *dest, int bitlen) {
     }
 }
 
-void bigInt_ModPow(bigInt_t *dst, bigInt_t *a, bigInt_t *b, bigInt_t *mod, uint8_t *bits, int cur) {
+void bigInt_ModPow(bigInt_t *dst, bigInt_t *a, bigInt_t *mod, uint8_t *bits, int cur) {
     bigInt_t ap;
     CP_BIGINT(&ap, a);
 
@@ -131,7 +131,7 @@ uint8_t bigInt_isPrime(bigInt_t *bi) {
     
     for (int i = 0; i < PRIME_CONFIDENCE; ++i) {
         bigInt_from_bitlen(&a, 16);
-        bigInt_ModPow(&a, &a, &d, bi, bits, cur);
+        bigInt_ModPow(&a, &a, bi, bits, cur);
 
         if (a.len == 1 && a.data[0] == 1)
             continue;
@@ -385,31 +385,6 @@ void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
         bigInt_Sub(dst, a, dst);
     }
 }
-
-
-// void bigInt_Inverse(bigInt_t *inv, bigInt_t *gcd, bigInt_t *a, bigInt_t *b) {
-//     static bigInt_t x, y;
-//     if (b->data[b->len - 1] == 0) {
-//         x.data[0] = 1;
-//         x.len = 1;
-//         y.data[0] = 0;
-//         y.len = 1;
-//         CP_BIGINT(gcd, a);
-//     } else {
-//         bigInt_t mod, a_div_b;
-//         bigInt_Mod(&mod, a, b);
-//         bigInt_Inverse(inv, gcd, b, &mod);
-//         CP_BIGINT(&mod, &x);
-//         CP_BIGINT(&x, &y);
-//         bigInt_Div(&a_div_b, a, b);
-//         bigInt_Mul(&y, &y, &a_div_b);
-//         while (bigInt_Cmp(&mod, &y) < 0) {
-//             bigInt_Add
-//         }
-//         bigInt_Sub(&y, &mod, &y);
-//         CP_BIGINT(inv, &x);
-//     }
-// }
 
 void bigInt_Inverse(bigInt_t *d, bigInt_t *e, bigInt_t *n) {
     bigInt_t b, e_minus, tmp, const_1;

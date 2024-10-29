@@ -22,7 +22,6 @@ void bigInt_from_string(bigInt_t *dest, char *str);
 void bigInt_from_bitlen(bigInt_t *dest, int bitlen);
 void init_bigInt();
 
-
 // operators
 uint8_t bigInt_isPrime(bigInt_t *bi);
 void bigInt_Add(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
@@ -31,6 +30,7 @@ void bigInt_Mul(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Mul_New(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Div(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_ModPow(bigInt_t *dst, bigInt_t *a, bigInt_t *mod, uint8_t *bits, int cur);
 void bigInt_Inverse(bigInt_t *d, bigInt_t *e, bigInt_t *n);
 void bigInt_RShift(bigInt_t *dst, uint16_t bits);
 void bigInt_LShift(bigInt_t *dst, uint16_t bits);

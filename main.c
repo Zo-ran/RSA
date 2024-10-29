@@ -17,7 +17,6 @@ int main() {
     char input[MAX_INPUT_LEN + 1] = "\0";
     char buf[64] = "\0";
     cmode_t key_len;
-    bigInt_t bigInt;
 
     printf("Please select the key length (512, 768, 1024): ");
     scanf("%d", &key_len);
@@ -27,12 +26,19 @@ int main() {
     scanf("%s", buf);
     assert(strcmp(buf, "gen") == 0);
 
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
     cipher_t *cipher = create_cipher(key_len);
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("%f\n", cpu_time_used);
 
+    bigInt_t bi;
     printf("Please type the string to be encrypted: ");
     scanf("%s", input);
-    bigInt_from_string(&bigInt, input);
-    print_bigInt_string(&bigInt);
+    bigInt_from_string(&bi, input);
+    print_bigInt_string(&bi);
 }
 
 #else
@@ -133,23 +139,17 @@ void test_prime() {
     bigInt_t const2;
     const2.data[0] = 2;
     const2.len = 1;
-    // for (int i = 0; i < 166; ++i) {
-    //     const2.data[0] = prime_table[i];
-    //     printf("%d\n", bigInt_isPrime(&const2));
-    // }
-    bigInt_from_bitlen(&a, 64);
-    // print_bigInt_int(&a);
+    clock_t start, end;
+    double cpu_time_used;
+    bigInt_from_bitlen(&a, 512);
+    start = clock();
     while (!bigInt_isPrime(&a)) {
         print_bigInt_int(&a);
         bigInt_Add(&a, &a, &const2);
     }
-    uint64_t res = 0;
-    for (int i = a.len - 1; i >= 1; --i) {
-        res += a.data[i];
-        res *= 65536;
-    }
-    res += a.data[0];
-    printf("%llu\n", res);
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("%f\n", cpu_time_used);
     print_bigInt_int(&a);
 }
 
@@ -168,6 +168,6 @@ void test_inverse() {
 int main() {
     srand((unsigned)time(NULL));
     // rand();
-    test_inverse();
+    test_prime();
 }
 #endif
