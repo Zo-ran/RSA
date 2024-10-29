@@ -386,6 +386,58 @@ void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b) {
     }
 }
 
+
+// void bigInt_Inverse(bigInt_t *inv, bigInt_t *gcd, bigInt_t *a, bigInt_t *b) {
+//     static bigInt_t x, y;
+//     if (b->data[b->len - 1] == 0) {
+//         x.data[0] = 1;
+//         x.len = 1;
+//         y.data[0] = 0;
+//         y.len = 1;
+//         CP_BIGINT(gcd, a);
+//     } else {
+//         bigInt_t mod, a_div_b;
+//         bigInt_Mod(&mod, a, b);
+//         bigInt_Inverse(inv, gcd, b, &mod);
+//         CP_BIGINT(&mod, &x);
+//         CP_BIGINT(&x, &y);
+//         bigInt_Div(&a_div_b, a, b);
+//         bigInt_Mul(&y, &y, &a_div_b);
+//         while (bigInt_Cmp(&mod, &y) < 0) {
+//             bigInt_Add
+//         }
+//         bigInt_Sub(&y, &mod, &y);
+//         CP_BIGINT(inv, &x);
+//     }
+// }
+
+void bigInt_Inverse(bigInt_t *d, bigInt_t *e, bigInt_t *n) {
+    bigInt_t b, e_minus, tmp, const_1;
+    bigInt_Div(d, n, e);
+    bigInt_Mod(&b, n, e);
+    const_1.data[0] = 1;
+    const_1.len = 1;
+    bigInt_Sub(&e_minus, e, &const_1);
+    while (b.data[b.len - 1] != 0) {
+        bigInt_Mod(&tmp, &e_minus, &b);
+        if (tmp.data[tmp.len - 1] == 0)
+            break;
+        bigInt_Div(&tmp, &e_minus, &b);
+        bigInt_Add(&tmp, &tmp, &const_1);
+        bigInt_Mul(d, d, &tmp);
+        bigInt_Add(d, d, &const_1);
+        bigInt_Mod(d, d, n);
+
+        bigInt_Mul(&b, &b, &tmp);
+        bigInt_Mod(&b, &b, e);
+    }
+    assert(b.data[b.len - 1] != 0);
+    bigInt_Div(&tmp, &e_minus, &b);
+    bigInt_Mul(d, d, &tmp);
+    bigInt_Add(d, d, &const_1);
+    bigInt_Mod(d, d, n);
+}
+
 void bigInt_RShift(bigInt_t *dst, uint16_t bits) {
     assert(bits == 1);
     dst->data[dst->len] = 0;

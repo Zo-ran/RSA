@@ -8,4 +8,11 @@ typedef enum mode {
     MODE_1024 = 1024
 } cmode_t;
 
+struct cipher {
+    bigInt_t p, q;
+    bigInt_t d; // private key
+    bigInt_t n, e; // public key
+    cmode_t key_len;
+};
+
 cipher_t *create_cipher(cmode_t key_len);

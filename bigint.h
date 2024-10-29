@@ -31,6 +31,7 @@ void bigInt_Mul(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Mul_New(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Div(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
 void bigInt_Mod(bigInt_t *dst, bigInt_t *a, bigInt_t *b);
+void bigInt_Inverse(bigInt_t *d, bigInt_t *e, bigInt_t *n);
 void bigInt_RShift(bigInt_t *dst, uint16_t bits);
 void bigInt_LShift(bigInt_t *dst, uint16_t bits);
 int bigInt_Cmp(bigInt_t *a, bigInt_t *b);
