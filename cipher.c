@@ -77,6 +77,33 @@ cipher_t *create_cipher(cmode_t key_len) {
     return ret;
 }
 
+// n ^ e mod n
+
 void encrypt(bigInt_t *plain, cipher_t *cipher) {
-    
+    uint8_t bits[cipher->e.len * 16];
+    int cur = 0;
+    for (int i = 0; i < cipher->e.len; ++i) {
+        uint16_t t = cipher->e.data[i];
+        for (int j = 0; j < 16; ++j) {
+            bits[cur++] = t & 0x1;
+            t >>= 1;
+        }
+    }
+    while (bits[cur - 1] == 0) cur -= 1;
+
+    bigInt_ModPow(plain, plain, &cipher->n, bits, cur);
 }
+
+void decrypt(bigInt_t *plain, cipher_t *cipher) {
+    uint8_t bits[cipher->d.len * 16];
+    int cur = 0;
+    for (int i = 0; i < cipher->d.len; ++i) {
+        uint16_t t = cipher->d.data[i];
+        for (int j = 0; j < 16; ++j) {
+            bits[cur++] = t & 0x1;
+            t >>= 1;
+        }
+    }
+    while (bits[cur - 1] == 0) cur -= 1;
+    bigInt_ModPow(plain, plain, &cipher->n, bits, cur);
+}   

@@ -18,7 +18,7 @@ struct bigInt {
 };
 
 // constructor
-void bigInt_from_string(bigInt_t *dest, char *str);
+void bigInt_from_string(bigInt_t *dest, unsigned char *str);
 void bigInt_from_bitlen(bigInt_t *dest, int bitlen);
 void init_bigInt();
 
@@ -40,3 +40,4 @@ void bigInt_Mul_int(bigInt_t *dst, bigInt_t *a, uint16_t d);
 // formatter
 void print_bigInt_string(bigInt_t *bi);
 void print_bigInt_int(bigInt_t *bi);
+void print_bigInt_hex(bigInt_t *bi);

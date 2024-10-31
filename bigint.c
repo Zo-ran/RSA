@@ -29,7 +29,7 @@ uint16_t prime_table[] = {
         9649, 9697, 9857
 };
 
-void bigInt_from_string(bigInt_t *dest, char *str) {
+void bigInt_from_string(bigInt_t *dest, unsigned char *str) {
     int len = strlen(str);
     assert(len <= MAX_INPUT_LEN && len > 0);
     
@@ -468,4 +468,20 @@ void print_bigInt_int(bigInt_t *bi) {
     for (int i = 0; i < bi->len; ++i)
         printf("%d ", bi->data[i]);
     printf("\n");
+}
+
+void print_bigInt_hex(bigInt_t *bi) {
+    uint8_t non_zero = false;
+    // 0-3 4-7 8-11 12-15
+    for (int i = bi->len - 1; i >= 0; --i) {
+        uint16_t cur = bi->data[i];
+        for (int j = 12; j >= 0; j -= 4) {
+            uint8_t _4bits = (cur >> j) & 0xf;
+            non_zero = non_zero || _4bits;
+            if (_4bits != 0)
+                printf("%X", _4bits);
+            else if (non_zero)
+                printf("%X", _4bits);
+        }
+    }
 }

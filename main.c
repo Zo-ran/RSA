@@ -3,19 +3,63 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include "config.h"
 
 #include "bigint.h"
 #include "cipher.h"
+#include "sha256.h"
 
 extern const uint16_t prime_table[];
 
-#if DEBUG == 0
+char buf[64];
+
+void Encrypt_Decrypt(cipher_t *cipher) {
+    char input[MAX_INPUT_LEN + 1] = "\0";
+    bigInt_t plain;
+    printf("Please input the string to be encrypted: ");
+    scanf("%s", input);
+    bigInt_from_string(&plain, input);
+    encrypt(&plain, cipher);
+    printf("The encrypted text: ");
+    print_bigInt_hex(&plain);
+    printf("\n");
+    printf("Please type \"decrypt\" to generate key: ");
+    scanf("%s", buf);
+    assert(strcmp(buf, "decrypt") == 0);
+    decrypt(&plain, cipher);
+    printf("The decrypted text: ");
+    print_bigInt_string(&plain);
+    printf("\n=================================================\n\n");
+}
+
+void Sign_Verify(cipher_t *cipher) {
+    bigInt_t plain;
+    char input[MAX_INPUT_LEN + 1] = "\0";
+    unsigned char hash_out[32] = "\0";
+    printf("Please input the message to be signed: ");
+    scanf("%s", input);
+    printf("Please type \"hash\" to hash the message: ");
+    scanf("%s", buf);
+    assert(strcmp(buf, "hash") == 0);
+    sha256(input, strlen(input), hash_out);
+    bigInt_from_string(&plain, hash_out);
+    printf("The message after hash: ");
+    print_bigInt_hex(&plain);
+    printf("\n");
+    printf("The signature: ");
+    decrypt(&plain, cipher);
+    print_bigInt_hex(&plain);
+    printf("\n");
+    printf("Please type \"verify\" to verify the signature: ");
+    scanf("%s", buf);
+    assert(strcmp(buf, "verify") == 0);
+    printf("The result: ");
+    encrypt(&plain, cipher);
+    print_bigInt_hex(&plain);
+    printf("\n=================================================\n\n");
+}
 
 int main() {
     srand((unsigned)time(NULL));
-    char input[MAX_INPUT_LEN + 1] = "\0";
-    char buf[64] = "\0";
     cmode_t key_len;
 
     printf("Please select the key length (512, 768, 1024): ");
@@ -28,146 +72,29 @@ int main() {
 
     clock_t start, end;
     double cpu_time_used;
+    cipher_t *cipher;
     start = clock();
-    cipher_t *cipher = create_cipher(key_len);
+    cipher = create_cipher(key_len);
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f\n", cpu_time_used);
-
-    bigInt_t bi;
-    printf("Please type the string to be encrypted: ");
-    scanf("%s", input);
-    bigInt_from_string(&bi, input);
-    print_bigInt_string(&bi);
-}
-
-#else
-
-bigInt_t a, b, c, d, e, f, g;
-
-void test_add() {
-    bigInt_from_bitlen(&a, 512);
-    print_bigInt_int(&a);
-    bigInt_from_bitlen(&b, 1024);
-    print_bigInt_int(&b);
-    bigInt_Add(&c, &a, &b);
-    print_bigInt_int(&c);
-}
-
-void test_mul() {
-    clock_t start, end;
-    double cpu_time_used;
-
-    bigInt_from_bitlen(&a, 1024);
-    bigInt_from_bitlen(&b, 1024);
-
-
-    start = clock();  
-    for (int i = 0; i < 20000; ++i)
-        bigInt_Mul(&c, &a, &b);
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f\n", cpu_time_used);
-
-
-    start = clock();
-    for (int i = 0; i < 20000; ++i)
-        bigInt_Mul_New(&d, &a, &b);
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f\n", cpu_time_used);
-
-    assert(bigInt_Cmp(&c, &d) == 0);
-}
-
-void test_div() {
-    clock_t start, end;
-    double cpu_time_used;
-
-    bigInt_from_bitlen(&a, 1024);
-    bigInt_from_bitlen(&b, 512);
-
-
-    start = clock();  
-    for (int i = 0; i < 200000; ++i)
-        bigInt_Div(&c, &a, &b);
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f\n", cpu_time_used);
-}
-
-void test() {
-    bigInt_from_bitlen(&a, 1024);
-    a.len /= 2;
-    CP_BIGINT(&d, &a);
-    bigInt_from_bitlen(&b, 512);
-    b.len /= 2;
-    print_bigInt_int(&a);
-    print_bigInt_int(&b);
-    bigInt_Div(&c, &a, &b);
-    bigInt_Mod(&a, &a, &b);
-    print_bigInt_int(&a);
-    bigInt_Mul(&c, &c, &b);
-    bigInt_Add(&c, &a, &c);
-    assert(bigInt_Cmp(&d, &c) == 0);
-    assert(bigInt_Cmp(&a, &b) < 0);
-}
-
-void test_calc() {
-    a.len = 16;
-    a.data[16] = 30348;
-    a.data[15] = 5381;
-    b.len = 16;
-    b.data[15] = 40204;
-    b.data[16] = 0;
-    printf("%d", bigInt_Cmp(&a, &b));
-}
-
-void test_mod(){
-    bigInt_from_bitlen(&a, 16);
-    // a.len /= 2;
-    bigInt_from_bitlen(&b, 16);
-    // b.len /= 2;
-    print_bigInt_int(&a);
-    print_bigInt_int(&b);
-    bigInt_Mod(&a, &a, &b);
-    print_bigInt_int(&a);
-}
-
-
-void test_prime() {
-    bigInt_t const2;
-    const2.data[0] = 2;
-    const2.len = 1;
-    clock_t start, end;
-    double cpu_time_used;
-    bigInt_from_bitlen(&a, 512);
-    start = clock();
-    while (!bigInt_isPrime(&a)) {
-        print_bigInt_int(&a);
-        bigInt_Add(&a, &a, &const2);
+    printf("generated in %fs\n", cpu_time_used);
+    printf("Your public key (in hexadecimal)  is: ");
+    print_bigInt_hex(&cipher->n);
+    printf(" ");
+    print_bigInt_hex(&cipher->e);
+    printf("\n");
+    printf("Your private key (in hexadecimal) is: ");
+    print_bigInt_hex(&cipher->d);
+    printf("\n\n");
+    printf("=================================================\n0. exit   1. encrypt/decrypt   2. sign/verify\n=================================================\n\n");
+    uint8_t func = 100;
+    while (func) {
+        printf("Please select the function: ");
+        scanf("%d", &func);
+        if (func == 1) {
+            Encrypt_Decrypt(cipher);
+        } else if (func == 2) {
+            Sign_Verify(cipher);
+        }
     }
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f\n", cpu_time_used);
-    print_bigInt_int(&a);
 }
-
-void test_inverse() {
-    bigInt_from_bitlen(&a, 1024);
-    print_bigInt_int(&a);
-    b.data[0] = 1;
-    b.data[1] = 1;
-    b.len = 2;
-    bigInt_Inverse(&c, &b, &a);
-    bigInt_Mul(&d, &b, &c);
-    bigInt_Mod(&d, &d, &a);
-    print_bigInt_int(&d);
-}
-
-int main() {
-    srand((unsigned)time(NULL));
-    // rand();
-    test_prime();
-}
-#endif

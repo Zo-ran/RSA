@@ -16,3 +16,5 @@ struct cipher {
 };
 
 cipher_t *create_cipher(cmode_t key_len);
+void encrypt(bigInt_t *plain, cipher_t *cipher);
+void decrypt(bigInt_t *plain, cipher_t *cipher);
